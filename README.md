@@ -4,3 +4,5 @@ The transformer model was programmed by myself, as described in https://arxiv.or
 The internet helped me to create my transformer model.
 
 For the future, I want to solve problems with my transformer model and optimise it.
+
+![Drag Racing](transformer.png)
