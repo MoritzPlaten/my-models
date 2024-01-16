@@ -37,10 +37,10 @@ class PositionalEmbedding(tf.keras.layers.Layer):
 
 class CrossAttention(keras.layers.Layer):
 
-    def __init__(self, *, activity_regularizer=None, trainable=True, dtype=None, autocast=True, name=None, **kwargs):
-        super().__init__(activity_regularizer=activity_regularizer, trainable=trainable, dtype=dtype, autocast=autocast, name=name, **kwargs)
+    def __init__(self, key_dim, num_heads, dropout=0.1):
+        super().__init__()
 
-        self.multi_head = keras.layers.MultiHeadAttention(**kwargs)
+        self.multi_head = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim, dropout=dropout)
         self.norm = keras.layers.LayerNormalization()
         self.add = keras.layers.Add()
 
@@ -61,10 +61,10 @@ class CrossAttention(keras.layers.Layer):
         
 class GlobalSelfAttention(keras.layers.Layer):
    
-    def __init__(self, *, activity_regularizer=None, trainable=True, dtype=None, autocast=True, name=None, **kwargs):
-        super().__init__(activity_regularizer=activity_regularizer, trainable=trainable, dtype=dtype, autocast=autocast, name=name, **kwargs)
+    def __init__(self, key_dim, num_heads, dropout=0.1):
+        super().__init__()
 
-        self.multi_head = keras.layers.MultiHeadAttention(**kwargs)
+        self.multi_head = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim, dropout=dropout)
         self.norm = keras.layers.LayerNormalization()
         self.add = keras.layers.Add()
 
@@ -81,10 +81,10 @@ class GlobalSelfAttention(keras.layers.Layer):
 
 class CausalSelfAttention(keras.layers.Layer):
    
-    def __init__(self, *, activity_regularizer=None, trainable=True, dtype=None, autocast=True, name=None, **kwargs):
-        super().__init__(activity_regularizer=activity_regularizer, trainable=trainable, dtype=dtype, autocast=autocast, name=name, **kwargs)
+    def __init__(self, key_dim, num_heads, dropout=0.1):
+        super().__init__()
 
-        self.multi_head = keras.layers.MultiHeadAttention(**kwargs)
+        self.multi_head = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim, dropout=dropout)
         self.norm = keras.layers.LayerNormalization()
         self.add = keras.layers.Add()
 

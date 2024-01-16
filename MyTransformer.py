@@ -36,7 +36,7 @@ class MyTransformer(keras.Model):
 
         x = self.decoder(x, context) # (batch_size, target_len, target_vocab_size)
 
-        output = self.final_layer(x)
+        output = self.output_layer(x)
 
         try:
             del output._keras_mask
