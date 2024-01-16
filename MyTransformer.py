@@ -1,12 +1,12 @@
 import tensorflow as tf
 import keras
 
-from helper_class import Encoder, Decoder
+from .helper_class import Encoder, Decoder
 
 class MyTransformer(keras.Model):
 
-    def __init__(self, *, num_layers=4, d_model=128, num_heads=8, dff=512, input_vocab_size, target_vocab_size, dropout=0.1):
-        super().__init__()
+    def __init__(self, input_vocab_size, target_vocab_size, num_layers=4, d_model=128, num_heads=8, dff=512, dropout=0.1):
+        super(MyTransformer, self).__init__()
 
         self.encoder = Encoder(
             num_layers=num_layers,

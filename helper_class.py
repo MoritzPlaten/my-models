@@ -18,8 +18,9 @@ def positional_encoding(length, depth):
   return tf.cast(pos_encoding, dtype=tf.float32)
 
 class PositionalEmbedding(tf.keras.layers.Layer):
+  
   def __init__(self, vocab_size, d_model):
-    super().__init__()
+    super(PositionalEmbedding, self).__init__()
     self.d_model = d_model
     self.embedding = tf.keras.layers.Embedding(vocab_size, d_model, mask_zero=True) 
     self.pos_encoding = positional_encoding(length=2048, depth=d_model)
@@ -38,7 +39,7 @@ class PositionalEmbedding(tf.keras.layers.Layer):
 class CrossAttention(keras.layers.Layer):
 
     def __init__(self, key_dim, num_heads, dropout=0.1):
-        super().__init__()
+        super(CrossAttention, self).__init__()
 
         self.multi_head = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim, dropout=dropout)
         self.norm = keras.layers.LayerNormalization()
@@ -62,7 +63,7 @@ class CrossAttention(keras.layers.Layer):
 class GlobalSelfAttention(keras.layers.Layer):
    
     def __init__(self, key_dim, num_heads, dropout=0.1):
-        super().__init__()
+        super(GlobalSelfAttention, self).__init__()
 
         self.multi_head = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim, dropout=dropout)
         self.norm = keras.layers.LayerNormalization()
@@ -82,7 +83,7 @@ class GlobalSelfAttention(keras.layers.Layer):
 class CausalSelfAttention(keras.layers.Layer):
    
     def __init__(self, key_dim, num_heads, dropout=0.1):
-        super().__init__()
+        super(CausalSelfAttention, self).__init__()
 
         self.multi_head = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim, dropout=dropout)
         self.norm = keras.layers.LayerNormalization()
@@ -104,7 +105,7 @@ class CausalSelfAttention(keras.layers.Layer):
 class FeedForward(keras.layers.Layer):
    
     def __init__(self, d_model, dff, dropout=0.1):
-        super().__init__()
+        super(FeedForward, self).__init__()
 
         self.feedForw = keras.models.Sequential([
            keras.layers.Dense(dff, activation="relu"),
@@ -124,8 +125,8 @@ class FeedForward(keras.layers.Layer):
 
 class EncoderLayer(keras.layers.Layer):
    
-    def __init__(self, *, d_model, num_heads, dff, dropout=0.1):
-      super().__init__()
+    def __init__(self, d_model, num_heads, dff, dropout=0.1):
+      super(EncoderLayer, self).__init__()
 
       self.global_attn = GlobalSelfAttention(
         num_heads=num_heads,
@@ -147,8 +148,8 @@ class EncoderLayer(keras.layers.Layer):
     
 class Encoder(keras.layers.Layer):
    
-    def __init__(self, *, num_layers, d_model, num_heads, dff, vocab_size, dropout=0.1):
-      super().__init__()
+    def __init__(self, num_layers, d_model, num_heads, dff, vocab_size, dropout=0.1):
+      super(Encoder, self).__init__()
 
       self.num_layers = num_layers
 
@@ -181,8 +182,8 @@ class Encoder(keras.layers.Layer):
     
 class DecoderLayer(keras.layers.Layer):
    
-    def __init__(self, *, num_heads, d_model, dff, dropout=0.1):
-        super().__init__()
+    def __init__(self, num_heads, d_model, dff, dropout=0.1):
+        super(DecoderLayer, self).__init__()
 
         self.causal_attn = CausalSelfAttention(
             num_heads=num_heads,
@@ -211,8 +212,9 @@ class DecoderLayer(keras.layers.Layer):
       
 class Decoder(keras.layers.Layer):
    
-    def __init__(self, *, num_layers, d_model, num_heads, dff, vocab_size, dropout=0.1):
-        
+    def __init__(self, num_layers, d_model, num_heads, dff, vocab_size, dropout=0.1):
+        super(Decoder, self).__init__()
+
         self.num_layers = num_layers
 
         self.pos_embb = PositionalEmbedding(
