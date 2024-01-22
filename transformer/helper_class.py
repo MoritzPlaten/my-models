@@ -204,11 +204,13 @@ class DecoderLayer(keras.layers.Layer):
         
     def call(self, x, context):
        
-       x = self.causal_attn(x)
-       x = self.cross_attn(x, context)
+        x = self.causal_attn(x)
+        x = self.cross_attn(x, context)
+
+        self.last_attn_scores = self.cross_attn.last_attn_scores
        
-       x = self.ff(x)
-       return x
+        x = self.ff(x)
+        return x
       
 class Decoder(keras.layers.Layer):
    
@@ -216,6 +218,8 @@ class Decoder(keras.layers.Layer):
         super(Decoder, self).__init__()
 
         self.num_layers = num_layers
+        self.last_attn_scores = None
+
 
         self.pos_embb = PositionalEmbedding(
             vocab_size=vocab_size,
@@ -242,5 +246,7 @@ class Decoder(keras.layers.Layer):
 
         for i in range(self.num_layers):
             x = self.dec_layers[i](x, context)
+
+        self.last_attn_scores = self.dec_layers[-1].last_attn_scores
         
         return x

@@ -26,6 +26,8 @@ class MyTransformer(keras.Model):
             dropout=dropout
         )
 
+        self.attn_scores = None
+
         self.output_layer = keras.layers.Dense(target_vocab_size)
 
     def call(self, inputs):
@@ -35,6 +37,8 @@ class MyTransformer(keras.Model):
         context = self.encoder(context) # (batch_size, context_len, d_model)
 
         x = self.decoder(x, context) # (batch_size, target_len, target_vocab_size)
+
+        self.attn_scores = self.decoder.dec_layers[-1].last_attn_scores
 
         output = self.output_layer(x)
 
