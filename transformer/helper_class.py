@@ -24,6 +24,7 @@ class PositionalEmbedding(tf.keras.layers.Layer):
     self.d_model = d_model
     self.embedding = tf.keras.layers.Embedding(vocab_size, d_model, mask_zero=True) 
     self.pos_encoding = positional_encoding(length=2048, depth=d_model)
+    self.supports_masking = True
 
   def compute_mask(self, *args, **kwargs):
     return self.embedding.compute_mask(*args, **kwargs)
@@ -46,13 +47,15 @@ class CrossAttention(keras.layers.Layer):
         self.multi_head = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim, dropout=dropout)
         self.norm = keras.layers.LayerNormalization()
         self.add = keras.layers.Add()
+        self.supports_masking = True
 
-    def call(self, x, context):
+    def call(self, x, context, mask=None):
        
        attn_output, attn_scores = self.multi_head(
           query=x,
           value=context,
           key=context,
+          attention_mask=mask,
           return_attention_scores=True
         )
        
@@ -70,14 +73,17 @@ class GlobalSelfAttention(keras.layers.Layer):
         self.multi_head = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim, dropout=dropout)
         self.norm = keras.layers.LayerNormalization()
         self.add = keras.layers.Add()
+        self.supports_masking = True
 
-    def call(self, x):
-
+    def call(self, x, mask=None):
+        
         attn_output = self.multi_head(
             query=x,
             value=x,
-            key=x,)
-        
+            key=x,
+            attention_mask=mask
+        )
+
         x = self.add([x, attn_output])
         x = self.norm(x)
         return x
@@ -90,15 +96,19 @@ class CausalSelfAttention(keras.layers.Layer):
         self.multi_head = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim, dropout=dropout)
         self.norm = keras.layers.LayerNormalization()
         self.add = keras.layers.Add()
+        self.supports_masking = True
 
-    def call(self, x):
+    def call(self, x, mask=None):
+
+        #TODO: add Masking for the Multiheadattention layer in every other layers too
 
         attn_output = self.multi_head(
             query=x,
             value=x,
             key=x,
-            use_causal_mask=True
-            )
+            use_causal_mask=True,
+            attention_mask=mask
+        )
         
         x = self.add([x, attn_output])
         x = self.norm(x)
@@ -114,9 +124,11 @@ class FeedForward(keras.layers.Layer):
            keras.layers.Dense(d_model),
            keras.layers.Dropout(dropout)
         ])
+        self.feedForw.supports_masking = True
 
         self.norm = keras.layers.LayerNormalization()
         self.add = keras.layers.Add()
+        self.supports_masking = True
 
     def call(self, x):
        
@@ -141,10 +153,11 @@ class EncoderLayer(keras.layers.Layer):
         dff=dff,
         dropout=dropout
         )
+      self.supports_masking = True
       
-    def call(self, x):
+    def call(self, x, mask=None):
        
-       x = self.global_attn(x)
+       x = self.global_attn(x, mask=mask)
        x = self.ff(x)
        return x
     
@@ -171,13 +184,14 @@ class Encoder(keras.layers.Layer):
       ]
 
       self.drop = keras.layers.Dropout(dropout)
+      self.supports_masking = True
 
-    def call(self, x):
+    def call(self, x, mask=None):
        
         x = self.pos_embb(x)
 
         for i in range(self.num_layers):
-            x = self.enc_layers[i](x)
+            x = self.enc_layers[i](x, mask=mask)
         
         x = self.drop(x)
         return x
@@ -203,11 +217,12 @@ class DecoderLayer(keras.layers.Layer):
             dff=dff,
             dropout=dropout
             )
+        self.supports_masking = True
         
-    def call(self, x, context):
-       
-        x = self.causal_attn(x)
-        x = self.cross_attn(x, context)
+    def call(self, x, context, mask=None):
+
+        x = self.causal_attn(x, mask=mask)
+        x = self.cross_attn(x, context, mask=mask)
 
         self.last_attn_scores = self.cross_attn.last_attn_scores
        
@@ -240,14 +255,16 @@ class Decoder(keras.layers.Layer):
 
             for _ in range(num_layers)
         ]
+        self.supports_masking = True
 
-    def call(self, x, context):
-       
+    def call(self, x, context, mask=None):
+
         x = self.pos_embb(x)
+
         x = self.drop(x)
 
         for i in range(self.num_layers):
-            x = self.dec_layers[i](x, context)
+            x = self.dec_layers[i](x, context, mask=mask)
 
         self.last_attn_scores = self.dec_layers[-1].last_attn_scores
         

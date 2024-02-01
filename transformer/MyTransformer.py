@@ -33,13 +33,26 @@ class MyTransformer(keras.Model):
 
         self.output_layer = keras.layers.Dense(target_vocab_size)
 
+    def compute_loss(self, x, pred):
+
+        mask = x != 0
+        loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+            from_logits=True, reduction='none')
+        loss = loss_object(x, pred)
+
+        mask = tf.cast(mask, dtype=loss.dtype)
+        loss *= mask
+
+        loss = tf.reduce_sum(loss)/tf.reduce_sum(mask)
+        return loss
+
     def train_step(self, data):
         context, x = data
 
         with tf.GradientTape() as tape:
             y_pred = self([context, x], training=True)
 
-            loss = self.compiled_loss(context, y_pred)
+            loss = self.compute_loss(context, y_pred)
 
         # Compute gradients
         trainable_vars = self.trainable_variables
@@ -67,9 +80,19 @@ class MyTransformer(keras.Model):
 
         context, x = inputs
 
-        context = self.encoder(context)
+        #batch_size = tf.shape(x)[0]
+        #sequence_length = tf.shape(x)[1]
+        #mask = tf.linalg.band_part(tf.ones((batch_size, sequence_length, sequence_length)), -1, 0)
+        #mask = mask * tf.cast(tf.math.not_equal(x, 0), tf.float32)
+        #mask = tf.cast(tf.math.not_equal(x, 0), tf.float32)
 
-        x = self.decoder(x, context)
+        attention_mask = tf.cast(tf.math.not_equal(x, 0), tf.float32)
+        attention_mask = tf.expand_dims(attention_mask, axis=1)
+        mask = attention_mask * tf.transpose(attention_mask, perm=[0, 2, 1])
+
+        context = self.encoder(context, mask=mask)
+
+        x = self.decoder(x, context, mask=mask)
 
         self.attn_scores = self.decoder.dec_layers[-1].last_attn_scores
 
