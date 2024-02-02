@@ -5,11 +5,13 @@ from .helper_class import Encoder, Decoder
 
 class MyTransformer(keras.Model):
 
-    def __init__(self, input_vocab_size, target_vocab_size, num_layers=4, d_model=128, num_heads=8, dff=512, dropout=0.1):
+    def __init__(self, input_vocab_size, target_vocab_size, sequence_length=2048, num_layers=4, d_model=128, num_heads=8, dff=512, dropout=0.1):
         super(MyTransformer, self).__init__()
 
         self.loss_tracker = keras.metrics.Mean(name="loss")
         self.acc_metric = tf.keras.metrics.SparseCategoricalAccuracy()
+
+        self.mask = keras.layers.Masking(mask_value=0)
 
         self.encoder = Encoder(
             num_layers=num_layers,
@@ -17,6 +19,7 @@ class MyTransformer(keras.Model):
             d_model=d_model,
             vocab_size=input_vocab_size,
             dff=dff,
+            sequence_length=sequence_length,
             dropout=dropout
         )
 
@@ -26,6 +29,7 @@ class MyTransformer(keras.Model):
             d_model=d_model,
             vocab_size=target_vocab_size,
             dff=dff,
+            sequence_length=sequence_length,
             dropout=dropout
         )
 
@@ -89,6 +93,8 @@ class MyTransformer(keras.Model):
         attention_mask = tf.cast(tf.math.not_equal(x, 0), tf.float32)
         attention_mask = tf.expand_dims(attention_mask, axis=1)
         mask = attention_mask * tf.transpose(attention_mask, perm=[0, 2, 1])
+
+        x = self.mask(x)
 
         context = self.encoder(context, mask=mask)
 

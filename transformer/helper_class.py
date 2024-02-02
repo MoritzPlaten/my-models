@@ -19,11 +19,11 @@ def positional_encoding(length, depth):
 
 class PositionalEmbedding(tf.keras.layers.Layer):
   
-  def __init__(self, vocab_size, d_model):
+  def __init__(self, vocab_size, d_model, sequence_length=2048):
     super(PositionalEmbedding, self).__init__()
     self.d_model = d_model
     self.embedding = tf.keras.layers.Embedding(vocab_size, d_model, mask_zero=True) 
-    self.pos_encoding = positional_encoding(length=2048, depth=d_model)
+    self.pos_encoding = positional_encoding(length=sequence_length, depth=d_model)
     self.supports_masking = True
 
   def compute_mask(self, *args, **kwargs):
@@ -163,14 +163,15 @@ class EncoderLayer(keras.layers.Layer):
     
 class Encoder(keras.layers.Layer):
    
-    def __init__(self, num_layers, d_model, num_heads, dff, vocab_size, dropout=0.1):
+    def __init__(self, num_layers, d_model, num_heads, dff, vocab_size, sequence_length=2048, dropout=0.1):
       super(Encoder, self).__init__()
 
       self.num_layers = num_layers
 
       self.pos_embb = PositionalEmbedding(
          vocab_size=vocab_size,
-         d_model=d_model
+         d_model=d_model,
+         sequence_length=sequence_length
       )
 
       self.enc_layers = [
@@ -231,7 +232,7 @@ class DecoderLayer(keras.layers.Layer):
       
 class Decoder(keras.layers.Layer):
    
-    def __init__(self, num_layers, d_model, num_heads, dff, vocab_size, dropout=0.1):
+    def __init__(self, num_layers, d_model, num_heads, dff, vocab_size, sequence_length=2048, dropout=0.1):
         super(Decoder, self).__init__()
 
         self.num_layers = num_layers
@@ -240,7 +241,8 @@ class Decoder(keras.layers.Layer):
 
         self.pos_embb = PositionalEmbedding(
             vocab_size=vocab_size,
-            d_model=d_model
+            d_model=d_model,
+            sequence_length=sequence_length
         )
 
         self.drop = tf.keras.layers.Dropout(dropout)
