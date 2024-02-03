@@ -1,11 +1,13 @@
 import torch
 
-from helperClass import PositionalEncoding, EncoderLayer, DecoderLayer
+from .helperClass import PositionalEncoding, EncoderLayer, DecoderLayer
 
 class MyTransformer(torch.nn.Module):
 
     def __init__(self, src_vocab_size=5000, tgt_vocab_size=5000, num_layers=6, d_model=512, num_heads=8, dff=2048, max_sequ_length=100, dropout=0.1) -> None:
         super(MyTransformer, self).__init__()
+
+        assert d_model % num_heads == 0, "d_model musst be divided by num_heads!"
 
         self.encoder_emb = torch.nn.Embedding(src_vocab_size, d_model)
         self.decoder_emb = torch.nn.Embedding(tgt_vocab_size, d_model)
@@ -43,6 +45,9 @@ class MyTransformer(torch.nn.Module):
         seq_length = tgt.size(1)
         nopeak_mask = (1 - torch.triu(torch.ones(1, seq_length, seq_length), diagonal=1)).bool()
         tgt_mask = tgt_mask & nopeak_mask
+
+        src_mask = torch.squeeze(src_mask, dim=1)
+        tgt_mask = torch.squeeze(tgt_mask, dim=1)
         return src_mask, tgt_mask
     
     def forward(self, src, tgt):

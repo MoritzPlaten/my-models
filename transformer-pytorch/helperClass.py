@@ -46,8 +46,8 @@ class EncoderLayer(torch.nn.Module):
             dropout=dropout
         )
 
-        self.norm1 = torch.nn.LayerNorm()
-        self.norm2 = torch.nn.LayerNorm()
+        self.norm1 = torch.nn.LayerNorm(d_model)
+        self.norm2 = torch.nn.LayerNorm(d_model)
 
         self.feedForw = FeedForward(
             d_model=d_model,
@@ -58,7 +58,7 @@ class EncoderLayer(torch.nn.Module):
         
     def forward(self, x, mask):
 
-        attn_out = self.self_attn(x, x, x, mask)
+        attn_out = self.self_attn(x, x, x, attn_mask=mask)
         x = x + attn_out
         x = self.norm1(x)
         x = self.dropout(x)
@@ -82,7 +82,7 @@ class DecoderLayer(torch.nn.Module):
             add_zero_attn=True,
             dropout=dropout
         )
-        self.norm1 = torch.nn.LayerNorm()
+        self.norm1 = torch.nn.LayerNorm(d_model)
         self.dropout = torch.nn.Dropout(dropout)
 
         self.cross_attn = torch.nn.MultiheadAttention(
@@ -91,22 +91,22 @@ class DecoderLayer(torch.nn.Module):
             add_zero_attn=True,
             dropout=dropout
         )
-        self.norm2 = torch.nn.LayerNorm()
+        self.norm2 = torch.nn.LayerNorm(d_model)
         self.dropout = torch.nn.Dropout(dropout)
 
         self.feedForw = FeedForward(
             d_model=d_model,
             dff=dff
         )
-        self.norm3 = torch.nn.LayerNorm()
+        self.norm3 = torch.nn.LayerNorm(d_model)
 
     def forward(self, x, enc_output, src_mask, tgt_mask):
 
-        attn_out = self.self_attn(x, x, x, tgt_mask)
+        attn_out = self.self_attn(x, x, x, attn_mask=tgt_mask)
         x = x + attn_out
         x = self.norm1(x)
 
-        cross_out = self.cross_attn(enc_output, enc_output, x, src_mask)
+        cross_out = self.cross_attn(enc_output, enc_output, x, attn_mask=src_mask)
         x = x + cross_out
         x = self.norm2(x)
 
