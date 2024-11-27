@@ -1,1 +1,67 @@
+# Python specific ignores
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Virtual environments
+*.env
+*.venv
+
+# Python distributions
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# C extensions
+*.so
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pytest
+.cache
+
+# Coverage reports
+*.cover
+*.coverage
+*.hypothesis/
+
+# Test and linting
+*.tox/
+*.nox/
+*.coverage/
+nosetests.xml
+coverage.xml
+*.hypothesis/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# MacOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+
+# Exclude h5 files (Keras models)
+*.h5
