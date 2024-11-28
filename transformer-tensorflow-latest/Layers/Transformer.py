@@ -1,5 +1,6 @@
 import keras
 import tensorflow as tf
+from tqdm import tqdm
 
 from Layers.Encoder import Encoder
 from Layers.Decoder import Decoder
@@ -84,7 +85,7 @@ class Transformer(keras.Model):
         num_batches = 0
 
         # Iterate over each batch
-        for context, target in dataset:
+        for context, target in tqdm(dataset):
             # Perform a training step
             loss, accuracy = self.train_step(context, target)
 
