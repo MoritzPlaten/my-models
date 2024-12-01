@@ -1,8 +1,10 @@
 import numpy as np
 
-def generate_random_data(total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size):
+import numpy as np
+
+def generate_random_data(total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size, start_token_input=1, start_token_target=1):
     """
-    Generate random tokenized data for testing purposes.
+    Generate random tokenized data for testing purposes, including a Start token for both input and target sequences.
 
     Args:
         total_sequences (int): Total number of sequences to generate.
@@ -10,6 +12,8 @@ def generate_random_data(total_sequences, max_input_length, max_target_length, i
         max_target_length (int): Maximum length of target sequences.
         input_vocab_size (int): Vocabulary size for input sequences.
         target_vocab_size (int): Vocabulary size for target sequences.
+        start_token_input (int): Token value for the input start token.
+        start_token_target (int): Token value for the target start token.
 
     Returns:
         tuple: Four Numpy arrays:
@@ -21,6 +25,10 @@ def generate_random_data(total_sequences, max_input_length, max_target_length, i
     # Generate random integers for input (context) and target sequences
     input_seq = np.random.randint(1, input_vocab_size, size=(total_sequences, max_input_length))
     target_seq = np.random.randint(1, target_vocab_size, size=(total_sequences, max_target_length))
+
+    # Ensure the first token in each sequence is the start token
+    input_seq[:, 0] = start_token_input
+    target_seq[:, 0] = start_token_target
 
     # Padding mask for input sequence (1 for padding, 0 for real tokens)
     input_padding_mask = np.where(input_seq == 0, 1, 0)  # Assuming '0' is padding token
