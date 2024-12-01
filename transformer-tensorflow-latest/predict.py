@@ -43,7 +43,7 @@ output_array = output_array.write(0, start_token)
 
 for i in range(max_target_length):
 
-    output = tf.expand_dims(output_array.stack(), axis=1)
+    output = tf.transpose(output_array.stack())
 
     predictions = transformer([input_seq, output], training=False)
     predictions = predictions[-1, -1:, :]
