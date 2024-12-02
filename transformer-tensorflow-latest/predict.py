@@ -17,7 +17,7 @@ max_input_length = 50
 max_target_length = 50
 input_vocab_size = 30000
 target_vocab_size = 30000
-total_sequences = 500
+total_sequences = 1
 
 # Instantiate the transformer model
 transformer = Transformer(
@@ -27,7 +27,8 @@ transformer = Transformer(
     dff=dff,
     input_vocab_size=input_vocab_size,
     target_vocab_size=target_vocab_size,
-    dropout_rate=dropout_rate
+    dropout_rate=dropout_rate,
+    max_target_length=max_target_length
 )
 
 transformer.load_weights("transformer.weights.h5")
@@ -44,11 +45,14 @@ output_array = output_array.write(0, start_token)
 for i in range(max_target_length):
 
     output = tf.transpose(output_array.stack())
+    output = tf.expand_dims(output, axis=-1)
 
     predictions = transformer([input_seq, output], training=False)
+
     predictions = predictions[-1, -1:, :]
     predicted_id = tf.argmax(predictions, axis=-1)
     predicted_id = tf.squeeze(predicted_id)
+
     output_array = output_array.write(i + 1, predicted_id)
 
 final_output = output_array.stack()

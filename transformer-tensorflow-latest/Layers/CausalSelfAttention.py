@@ -1,7 +1,8 @@
 from Layers.BaseAttention import BaseAttention
 
 class CausalSelfAttention(BaseAttention):
-  def call(self, x):
+
+  def call(self, x, training=False):
     attn_output = self.mha(
         query=x,
         value=x,

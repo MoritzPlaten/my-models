@@ -24,14 +24,14 @@ class Encoder(keras.layers.Layer):
         for _ in range(num_layers)]
     self.dropout = keras.layers.Dropout(dropout_rate)
 
-  def call(self, x):
+  def call(self, x, training=False):
     # `x` is token-IDs shape: (batch, seq_len)
     x = self.pos_embedding(x)  # Shape `(batch_size, seq_len, d_model)`.
 
     # Add dropout.
-    x = self.dropout(x)
+    x = self.dropout(x, training=training)
 
     for i in range(self.num_layers):
-      x = self.enc_layers[i](x)
+      x = self.enc_layers[i](x, training=training)
 
     return x  # Shape `(batch_size, seq_len, d_model)`.

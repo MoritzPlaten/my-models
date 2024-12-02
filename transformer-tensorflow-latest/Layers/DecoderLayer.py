@@ -27,9 +27,10 @@ class DecoderLayer(keras.layers.Layer):
 
     self.ffn = FeedForward(d_model, dff)
 
-  def call(self, x, context):
-    x = self.causal_self_attention(x=x)
-    x = self.cross_attention(x=x, context=context)
+  def call(self, x, context, training=False):
+    
+    x = self.causal_self_attention(x=x, training=training)
+    x = self.cross_attention(x=x, context=context, training=training)
 
     # Cache the last attention scores for plotting later
     self.last_attn_scores = self.cross_attention.last_attn_scores

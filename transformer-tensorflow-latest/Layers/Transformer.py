@@ -1,24 +1,25 @@
 import keras
 import tensorflow as tf
 from tqdm import tqdm
+import numpy as np
 
 from Layers.Encoder import Encoder
 from Layers.Decoder import Decoder
 
-from Metrics.TransformerMetrics import masked_accuracy, masked_loss
+from Metrics.TransformerMetrics import masked_accuracy, masked_loss, simple_loss, simple_accuracy
 
 class Transformer(keras.Model):
 
   def __init__(self, *, num_layers, d_model, num_heads, dff,
-               input_vocab_size, target_vocab_size, dropout_rate=0.1, learning_rate=0.001):
+               input_vocab_size, target_vocab_size, max_target_length, dropout_rate=0.1, learning_rate=0.001, training=False):
     super().__init__()
 
     self.supports_masking = True
 
     self.START_TOKEN = 6
     self.END_TOKEN = 120
-    self.target_vocab_size = target_vocab_size
-    self.input_vocab_size = input_vocab_size
+
+    self.max_target_length = max_target_length
 
     self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
@@ -34,7 +35,7 @@ class Transformer(keras.Model):
 
     self.final_layer = keras.layers.Dense(target_vocab_size)
 
-  def call(self, inputs):
+  def call(self, inputs, training=False):
 
     context, x  = inputs
     context = self.encoder(context)  # (batch_size, context_len, d_model)
@@ -53,8 +54,8 @@ class Transformer(keras.Model):
   def train_step(self, context, target):
 
     with tf.GradientTape() as tape:
-        logits = self.call((context, target))
-        loss = masked_loss(target, logits)
+      logits = self.call((context, target), training=True)
+      loss = masked_loss(target, logits)
 
     gradients = tape.gradient(loss, self.trainable_variables)
     self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
@@ -64,84 +65,100 @@ class Transformer(keras.Model):
     return loss, accuracy
   
 
-  @tf.function
   def evaluate(self, context, target):
 
+    accuracies = []
+    losses = []
+
+    for i in range(len(context)):
+
+      input_seq = context[i]
+      input_seq = tf.expand_dims(input_seq, axis=0)
+
+      final_output = self.my_predict(input_seq)
+
+      loss = simple_loss(target[i], final_output)
+      accuracy = simple_accuracy(target[i], final_output)
+
+      losses.append(loss)
+      accuracies.append(accuracy)
+
+    return np.mean(losses), np.mean(accuracies)
+  
+
+  def my_predict(self, context):
+
     output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
+    output_array = output_array.write(0, self.START_TOKEN)
 
-    start_token = tf.constant([self.START_TOKEN], dtype=tf.int64)
-    output_array = output_array.write(0, start_token)
+    for i in range(self.max_target_length - 1): 
 
-    for i in range(self.target_vocab_size): 
-        
-        output = tf.transpose(output_array.stack())
-        predictions = self.decoder([context, output], training=False)
-        predictions = predictions[-1, -1, :]
+      output = tf.transpose(output_array.stack())
+      output = tf.expand_dims(output, axis=0)
 
-        predicted_id = tf.argmax(predictions, axis=-1)
-        predicted_id = tf.squeeze(predicted_id)
-        
-        output_array = output_array.write(i + 1, predicted_id)
-        
-        if predicted_id == self.END_TOKEN:
-            break
+      predictions = self.call([context, output], training=False)
+      predictions = predictions[-1, -1, :]
+
+      predicted_id = tf.argmax(predictions, axis=-1)
+      predicted_id = tf.squeeze(predicted_id)
+      
+      output_array = output_array.write(i + 1, predicted_id)
+      
+      if predicted_id == self.END_TOKEN:
+        break
 
     final_output = output_array.stack()
-    
-    mask = tf.cast(target != 0, tf.float32)
-    loss = masked_loss(target, final_output, mask)
-    accuracy = masked_accuracy(target, final_output, mask)
-
-    return loss, accuracy
-
+    return final_output
 
 
   def my_train(self, x, y, val_x, val_y, batch_size=32, epochs=10):
-      history = {"loss": [], "accuracy": [], "val_loss": [], "val_accuracy": []}
 
-      train_dataset = tf.data.Dataset.from_tensor_slices((x, y)).shuffle(buffer_size=1024).batch(batch_size)
-      val_dataset = tf.data.Dataset.from_tensor_slices((val_x, val_y)).batch(batch_size)
+    history = {"loss": [], "accuracy": [], "val_loss": [], "val_accuracy": []}
 
-      for epoch in range(epochs):
-          print(f"Epoch {epoch + 1}/{epochs}")
-          
-          train_loss_sum = 0.0
-          train_accuracy_sum = 0.0
-          num_train_batches = 0
+    train_dataset = tf.data.Dataset.from_tensor_slices((x, y)).shuffle(buffer_size=1024).batch(batch_size)
+    val_dataset = tf.data.Dataset.from_tensor_slices((val_x, val_y)).batch(batch_size)
 
-          for context, target in tqdm(train_dataset, desc="Training"):
-              loss, accuracy = self.train_step(context, target)
+    for epoch in range(epochs):
+        print(f"Epoch {epoch + 1}/{epochs}")
+        
+        train_loss_sum = 0.0
+        train_accuracy_sum = 0.0
+        num_train_batches = 0
 
-              train_loss_sum += loss
-              train_accuracy_sum += accuracy
-              num_train_batches += 1
+        for context, target in tqdm(train_dataset, desc="Training"):
+            loss, accuracy = self.train_step(context, target)
 
-          avg_train_loss = train_loss_sum / num_train_batches
-          avg_train_accuracy = train_accuracy_sum / num_train_batches
+            train_loss_sum += loss
+            train_accuracy_sum += accuracy
+            num_train_batches += 1
 
-          print(f"Training - Loss: {avg_train_loss.numpy():.4f}, Accuracy: {avg_train_accuracy.numpy():.4f}")
+        avg_train_loss = train_loss_sum / num_train_batches
+        avg_train_accuracy = train_accuracy_sum / num_train_batches
 
-          val_loss_sum = 0.0
-          val_accuracy_sum = 0.0
-          num_val_batches = 0
+        print(f"Training - Loss: {avg_train_loss:.4f}, Accuracy: {avg_train_accuracy:.4f}")
 
-          for val_context, val_target in tqdm(val_dataset, desc="Validation"):
-              val_loss, val_accuracy = self.evaluate(val_context, val_target)
+        val_loss_sum = 0.0
+        val_accuracy_sum = 0.0
+        num_val_batches = 0
 
-              val_loss_sum += val_loss
-              val_accuracy_sum += val_accuracy
-              num_val_batches += 1
+        for val_context, val_target in tqdm(val_dataset, desc="Validation"):
 
-          avg_val_loss = val_loss_sum / num_val_batches
-          avg_val_accuracy = val_accuracy_sum / num_val_batches
+            val_loss, val_accuracy = self.evaluate(val_context, val_target)
 
-          print(f"Validation - Loss: {avg_val_loss.numpy():.4f}, Accuracy: {avg_val_accuracy.numpy():.4f}")
+            val_loss_sum += val_loss
+            val_accuracy_sum += val_accuracy
+            num_val_batches += 1
 
-          history["loss"].append(avg_train_loss.numpy())
-          history["accuracy"].append(avg_train_accuracy.numpy())
-          history["val_loss"].append(avg_val_loss.numpy())
-          history["val_accuracy"].append(avg_val_accuracy.numpy())
+        avg_val_loss = val_loss_sum / num_val_batches
+        avg_val_accuracy = val_accuracy_sum / num_val_batches
 
-      return history
+        print(f"Validation - Loss: {avg_val_loss.numpy():.4f}, Accuracy: {avg_val_accuracy.numpy():.4f}")
+
+        history["loss"].append(avg_train_loss.numpy())
+        history["accuracy"].append(avg_train_accuracy.numpy())
+        history["val_loss"].append(avg_val_loss.numpy())
+        history["val_accuracy"].append(avg_val_accuracy.numpy())
+
+    return history
 
   

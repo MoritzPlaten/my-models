@@ -27,15 +27,16 @@ transformer = Transformer(
     dff=dff,
     input_vocab_size=input_vocab_size,
     target_vocab_size=target_vocab_size,
-    dropout_rate=dropout_rate
+    dropout_rate=dropout_rate,
+    max_target_length=max_target_length
 )
 
 input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random_data(
     total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size, start_token_input=6, start_token_target=6
 )
 
-input_seq_len =  int(len(input_seq) * 0.9)
-target_seq_len = int(len(target_seq) * 0.9)
+input_seq_len =  int(len(input_seq) - 64)
+target_seq_len = int(len(target_seq) - 64)
 
 X_train = input_seq[:input_seq_len]
 y_train = target_seq[:target_seq_len]

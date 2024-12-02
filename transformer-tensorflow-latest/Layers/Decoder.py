@@ -23,14 +23,14 @@ class Decoder(keras.layers.Layer):
 
     self.last_attn_scores = None
 
-  def call(self, x, context):
+  def call(self, x, context, training=False):
     # `x` is token-IDs shape (batch, target_seq_len)
     x = self.pos_embedding(x)  # (batch_size, target_seq_len, d_model)
 
-    x = self.dropout(x)
+    x = self.dropout(x, training=training)
 
     for i in range(self.num_layers):
-      x  = self.dec_layers[i](x, context)
+      x  = self.dec_layers[i](x, context, training=training)
 
     self.last_attn_scores = self.dec_layers[-1].last_attn_scores
 
