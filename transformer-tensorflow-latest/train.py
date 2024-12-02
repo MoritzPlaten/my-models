@@ -45,22 +45,25 @@ y_validiation= target_seq[target_seq_len:]
 
 history = transformer.my_train(X_train, y_train, X_validiation, y_validiation, epochs=2)
 
-# Verlust plotten
-plt.plot(history['loss'], label='Training Loss')
-plt.plot(history['val_loss'], label='Validation Loss')
-plt.title('Loss über Epochen')
-plt.xlabel('Epoche')
-plt.ylabel('Verlust')
-plt.legend()
-plt.show()
 
-# Genauigkeit plotten
-plt.plot(history['accuracy'], label='Training Accuracy')
-plt.plot(history['val_accuracy'], label='Validation Accuracy')
-plt.title('Genauigkeit über Epochen')
-plt.xlabel('Epoche')
-plt.ylabel('Genauigkeit')
-plt.legend()
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+ax1.plot(history['loss'], label='Training Loss')
+ax1.plot(history['val_loss'], label='Validation Loss')
+ax1.set_title('Loss über Epochen')
+ax1.set_xlabel('Epoche')
+ax1.set_ylabel('Verlust')
+ax1.legend()
+
+ax2.plot(history['accuracy'], label='Training Accuracy')
+ax2.plot(history['val_accuracy'], label='Validation Accuracy')
+ax2.set_title('Genauigkeit über Epochen')
+ax2.set_xlabel('Epoche')
+ax2.set_ylabel('Genauigkeit')
+ax2.legend()
+
+plt.tight_layout()
+plt.savefig("training_metrics_plot.png")
 plt.show()
 
 # After training, you can save the model if needed

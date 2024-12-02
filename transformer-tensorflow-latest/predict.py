@@ -39,21 +39,6 @@ input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random
     total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size
 )
 
-output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
-output_array = output_array.write(0, start_token)
+prediction = transformer.my_predict(input_seq)
 
-for i in range(max_target_length):
-
-    output = tf.transpose(output_array.stack())
-    output = tf.expand_dims(output, axis=-1)
-
-    predictions = transformer([input_seq, output], training=False)
-
-    predictions = predictions[-1, -1:, :]
-    predicted_id = tf.argmax(predictions, axis=-1)
-    predicted_id = tf.squeeze(predicted_id)
-
-    output_array = output_array.write(i + 1, predicted_id)
-
-final_output = output_array.stack()
-print("Final predicted sequence:", final_output.numpy())
+print("Final predicted sequence:", prediction.numpy())

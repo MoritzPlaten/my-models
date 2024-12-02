@@ -152,12 +152,12 @@ class Transformer(keras.Model):
         avg_val_loss = val_loss_sum / num_val_batches
         avg_val_accuracy = val_accuracy_sum / num_val_batches
 
-        print(f"Validation - Loss: {avg_val_loss.numpy():.4f}, Accuracy: {avg_val_accuracy.numpy():.4f}")
+        print(f"Validation - Loss: {avg_val_loss:.4f}, Accuracy: {avg_val_accuracy:.4f}")
 
-        history["loss"].append(avg_train_loss.numpy())
-        history["accuracy"].append(avg_train_accuracy.numpy())
-        history["val_loss"].append(avg_val_loss.numpy())
-        history["val_accuracy"].append(avg_val_accuracy.numpy())
+        history["loss"].append(avg_train_loss)
+        history["accuracy"].append(avg_train_accuracy)
+        history["val_loss"].append(avg_val_loss)
+        history["val_accuracy"].append(avg_val_accuracy)
 
     return history
 
