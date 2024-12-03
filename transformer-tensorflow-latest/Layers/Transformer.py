@@ -21,7 +21,7 @@ class Transformer(keras.Model):
 
     self.max_target_length = max_target_length
 
-    self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    self.optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
     self.encoder = Encoder(num_layers=num_layers, d_model=d_model,
                            num_heads=num_heads, dff=dff,
@@ -65,7 +65,7 @@ class Transformer(keras.Model):
     return loss, accuracy
   
 
-  def evaluate(self, context, target):
+  """def evaluate(self, context, target):
 
     accuracies = []
     losses = []
@@ -83,10 +83,30 @@ class Transformer(keras.Model):
       losses.append(loss)
       accuracies.append(accuracy)
 
-    return np.mean(losses), np.mean(accuracies)
+    return np.mean(losses), np.mean(accuracies)"""
+  
+  @tf.function
+  def evaluate(self, context, target):
+      # Create a map function to process each context in the batch
+      def compute_loss_and_accuracy(input_seq, target_seq):
+          input_seq = tf.expand_dims(input_seq, axis=0)  # Add batch dimension
+          final_output = self.my_predict(input_seq)
+          
+          loss = simple_loss(target_seq, final_output)
+          accuracy = simple_accuracy(target_seq, final_output)
+          return loss, accuracy
+
+      # Map the function over the entire batch (context)
+      results = tf.map_fn(lambda x: compute_loss_and_accuracy(x[0], x[1]), (context, target), dtype=(tf.float32, tf.float32))
+
+      # Extract losses and accuracies from the results
+      losses, accuracies = results
+
+      # Return the mean loss and accuracy
+      return tf.reduce_mean(losses), tf.reduce_mean(accuracies)
   
 
-  def my_predict(self, context):
+  """def my_predict(self, context):
 
     output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
     output_array = output_array.write(0, self.START_TOKEN)
@@ -107,6 +127,45 @@ class Transformer(keras.Model):
       if predicted_id == self.END_TOKEN:
         break
 
+    final_output = output_array.stack()
+    return final_output"""
+  
+  @tf.function
+  def my_predict(self, context):
+    # Initialize output array
+    output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
+    output_array = output_array.write(0, self.START_TOKEN)
+    
+    # Define loop variables
+    i = tf.constant(0, dtype=tf.int32)
+    predicted_id = tf.constant(self.START_TOKEN, dtype=tf.int64)
+
+    # Define the condition for the while loop: i < max_target_length
+    def condition(i, predicted_id, output_array):
+        return tf.logical_and(i < self.max_target_length - 1, tf.not_equal(predicted_id, self.END_TOKEN))
+
+    # Define the body of the loop
+    def body(i, predicted_id, output_array):
+        output = tf.transpose(output_array.stack())
+        output = tf.expand_dims(output, axis=0)
+
+        predictions = self.call([context, output], training=False)
+        predictions = predictions[-1, -1, :]
+
+        predicted_id = tf.argmax(predictions, axis=-1)
+        predicted_id = tf.squeeze(predicted_id)
+
+        # Update the output array with the new token
+        output_array = output_array.write(i + 1, predicted_id)
+
+        # Increment the loop counter
+        i = i + 1
+        return i, predicted_id, output_array
+
+    # Use tf.while_loop to iterate with the condition and body
+    i, predicted_id, output_array = tf.while_loop(condition, body, [i, predicted_id, output_array])
+
+    # Stack the final output array
     final_output = output_array.stack()
     return final_output
 
