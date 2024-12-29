@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #from transformers import BertTokenizer
-from Layers.Transformer import Transformer
+from Layers.NARTransformer import NARTransformer
 from Dataset.MyDataset import generate_random_data
 
 # Parameters (adjust as needed)
@@ -20,7 +20,7 @@ target_vocab_size = 30000
 total_sequences = 500000
 
 # Instantiate the transformer model
-transformer = Transformer(
+transformer = NARTransformer(
     num_layers=num_layers,
     d_model=d_model,
     num_heads=num_heads,
@@ -67,7 +67,7 @@ plt.savefig("training_metrics_plot.png")
 plt.show()
 
 # After training, you can save the model if needed
-transformer.save_weights('transformer.weights.h5')
+transformer.save('transformer.h5')
 
 # Print model summary
 transformer.summary()
