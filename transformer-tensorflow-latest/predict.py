@@ -1,9 +1,5 @@
 import tensorflow as tf
-import numpy as np
 
-
-from Layers.Transformer import Transformer
-from Metrics.TransformerMetrics import masked_accuracy, masked_loss  # Import your custom metrics
 from Dataset.MyDataset import generate_random_data
 
 # Parameters (adjust as needed)
