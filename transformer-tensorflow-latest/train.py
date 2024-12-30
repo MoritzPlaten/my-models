@@ -67,7 +67,7 @@ plt.savefig("training_metrics_plot.png")
 plt.show()
 
 # After training, you can save the model if needed
-transformer.save_weights('transformer.weights.h5')
+tf.saved_model.save(transformer, "transformer.keras", signatures={"my_predict": transformer.my_predict})
 
 # Print model summary
 transformer.summary()

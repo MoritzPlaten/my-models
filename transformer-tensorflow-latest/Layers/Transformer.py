@@ -130,7 +130,7 @@ class Transformer(keras.Model):
     final_output = output_array.stack()
     return final_output"""
   
-  @tf.function
+  @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
   def my_predict(self, context):
     # Initialize output array
     output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)

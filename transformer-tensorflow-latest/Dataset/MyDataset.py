@@ -23,8 +23,8 @@ def generate_random_data(total_sequences, max_input_length, max_target_length, i
             - target_padding_mask (total_sequences, max_target_length): Mask for target sequences.
     """
     # Generate random integers for input (context) and target sequences
-    input_seq = np.random.randint(1, input_vocab_size, size=(total_sequences, max_input_length))
-    target_seq = np.random.randint(1, target_vocab_size, size=(total_sequences, max_target_length))
+    input_seq = np.random.randint(1, input_vocab_size, size=(total_sequences, max_input_length), dtype=np.int32)
+    target_seq = np.random.randint(1, target_vocab_size, size=(total_sequences, max_target_length), dtype=np.int32)
 
     # Ensure the first token in each sequence is the start token
     input_seq[:, 0] = start_token_input

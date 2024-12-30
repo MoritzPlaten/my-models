@@ -20,18 +20,7 @@ target_vocab_size = 30000
 total_sequences = 1
 
 # Instantiate the transformer model
-transformer = Transformer(
-    num_layers=num_layers,
-    d_model=d_model,
-    num_heads=num_heads,
-    dff=dff,
-    input_vocab_size=input_vocab_size,
-    target_vocab_size=target_vocab_size,
-    dropout_rate=dropout_rate,
-    max_target_length=max_target_length
-)
-
-transformer.load_weights("transformer.weights.h5")
+transformer = tf.saved_model.load('transformer.keras')
 
 start_token = 6
 
@@ -39,6 +28,6 @@ input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random
     total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size
 )
 
-prediction = transformer.my_predict(input_seq)
+prediction = transformer.signatures["my_predict"](context=input_seq)
 
-print("Final predicted sequence:", prediction.numpy())
+print("Final predicted sequence:", prediction)
