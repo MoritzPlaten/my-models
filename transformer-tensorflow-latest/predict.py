@@ -21,7 +21,7 @@ transformer = tf.saved_model.load('transformer.keras')
 start_token = 6
 
 input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random_data(
-    total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size
+    total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size, start_token_input=start_token, start_token_target=start_token
 )
 
 prediction = transformer.signatures["my_predict"](context=input_seq)

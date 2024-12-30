@@ -35,8 +35,8 @@ input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random
     total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size, start_token_input=6, start_token_target=6
 )
 
-input_seq_len =  int(len(input_seq) - 64)
-target_seq_len = int(len(target_seq) - 64)
+input_seq_len =  int(len(input_seq) - batch_size)
+target_seq_len = int(len(target_seq) - batch_size)
 
 X_train = input_seq[:input_seq_len]
 y_train = target_seq[:target_seq_len]
