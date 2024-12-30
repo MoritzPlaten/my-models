@@ -28,4 +28,4 @@ input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random
 
 prediction = transformer.signatures["my_predict"](context=input_seq)
 
-print("Final predicted sequence:", prediction.numpy())
+print("Final predicted sequence:", prediction)

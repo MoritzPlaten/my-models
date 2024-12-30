@@ -85,7 +85,7 @@ class NARTransformer(keras.Model):
 
     return np.mean(losses), np.mean(accuracies)"""
   
-  #@tf.function
+  @tf.function
   def evaluate(self, context, target):
       # Create a map function to process each context in the batch
       def compute_loss_and_accuracy(input_seq, target_seq):
@@ -132,7 +132,7 @@ class NARTransformer(keras.Model):
     final_output = output_array.stack()
     return final_output"""
   
-  @tf.function
+  @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
   def my_predict(self, context):
     batch_size = tf.shape(context)[0]  # Die Größe des Batches
     input_seq = tf.zeros([batch_size, self.max_target_length], dtype=tf.int64)  # Startsequenz (nur mit Nullwerten, Start-Token wird nachher eingefügt)

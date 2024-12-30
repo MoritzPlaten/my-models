@@ -33,14 +33,19 @@ def simple_loss(y_true, y_pred):
     
     y_true = tf.cast(y_true, dtype=tf.int32)
     y_pred = tf.cast(y_pred, dtype=tf.int32)
+
+    assert y_true.shape == y_pred.shape
     
-    loss = tf.cast(tf.not_equal(y_true, y_pred), dtype=tf.float32)
+    loss = tf.cast(tf.abs(y_true - y_pred) > 0, dtype=tf.float32)
     return tf.reduce_mean(loss)
 
 
 
 def simple_accuracy(y_true, y_pred):
     
+    y_true = tf.cast(y_true, dtype=tf.int32)
+    y_pred = tf.cast(y_pred, dtype=tf.int32)
+
     assert y_true.shape == y_pred.shape
     
     accuracy = tf.cast(tf.equal(y_true, y_pred), dtype=tf.float32)

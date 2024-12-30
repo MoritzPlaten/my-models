@@ -17,7 +17,7 @@ max_input_length = 50
 max_target_length = 50
 input_vocab_size = 30000
 target_vocab_size = 30000
-total_sequences = 1000
+total_sequences = 64*4
 
 # Instantiate the transformer model
 transformer = NARTransformer(
@@ -46,7 +46,7 @@ y_train = target_seq[:target_seq_len]
 X_validiation = input_seq[input_seq_len:]
 y_validiation = target_seq[target_seq_len:]
 
-history = transformer.my_train(X_train, y_train, X_validiation, y_validiation, epochs=2)
+history = transformer.my_train(X_train, y_train, X_validiation, y_validiation, epochs=2, batch_size=batch_size)
 
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
