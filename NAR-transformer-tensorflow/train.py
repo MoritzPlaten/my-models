@@ -17,7 +17,7 @@ max_input_length = 50
 max_target_length = 50
 input_vocab_size = 30000
 target_vocab_size = 30000
-total_sequences = 64*4
+total_sequences = 10000
 
 # Instantiate the transformer model
 transformer = NARTransformer(
@@ -35,11 +35,8 @@ input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random
     total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size, start_token_input=6, start_token_target=6
 )
 
-input_seq_len =  int(len(input_seq) - 64)
-target_seq_len = int(len(target_seq) - 64)
-
-input_seq_len = int(len(input_seq) * 0.5)
-target_seq_len = int(len(target_seq) * 0.5)
+input_seq_len =  int(len(input_seq) * 0.9)
+target_seq_len = int(len(target_seq) * 0.9)
 
 X_train = input_seq[:input_seq_len]
 y_train = target_seq[:target_seq_len]
@@ -48,6 +45,11 @@ y_validiation = target_seq[target_seq_len:]
 
 history = transformer.my_train(X_train, y_train, X_validiation, y_validiation, epochs=2, batch_size=batch_size)
 
+# After training, you can save the model if needed
+tf.saved_model.save(transformer, "transformer.keras", signatures={"my_predict": transformer.my_predict})
+
+# Print model summary
+transformer.summary()
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
@@ -68,9 +70,3 @@ ax2.legend()
 plt.tight_layout()
 plt.savefig("training_metrics_plot.png")
 plt.show()
-
-# After training, you can save the model if needed
-tf.saved_model.save(transformer, "transformer.keras", signatures={"my_predict": transformer.my_predict})
-
-# Print model summary
-transformer.summary()

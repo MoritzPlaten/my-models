@@ -85,12 +85,13 @@ class Transformer(keras.Model):
 
     return np.mean(losses), np.mean(accuracies)"""
   
-  @tf.function
+  #@tf.function
   def evaluate(self, context, target):
       # Create a map function to process each context in the batch
       def compute_loss_and_accuracy(input_seq, target_seq):
           input_seq = tf.expand_dims(input_seq, axis=0)  # Add batch dimension
           final_output = self.my_predict(input_seq)
+          final_output = tf.squeeze(final_output)
           
           loss = simple_loss(target_seq, final_output)
           accuracy = simple_accuracy(target_seq, final_output)

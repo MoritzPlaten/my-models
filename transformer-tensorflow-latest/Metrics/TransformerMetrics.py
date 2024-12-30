@@ -31,6 +31,9 @@ def masked_accuracy(label, pred):
 
 def simple_loss(y_true, y_pred):
     
+    y_true = tf.cast(y_true, dtype=tf.int32)
+    y_pred = tf.cast(y_pred, dtype=tf.int32)
+
     assert y_true.shape == y_pred.shape
 
     loss = tf.cast(tf.not_equal(y_true, y_pred), dtype=tf.float32)  # 1 for mismatch, 0 for match
@@ -38,6 +41,9 @@ def simple_loss(y_true, y_pred):
     return loss
 
 def simple_accuracy(y_true, y_pred):
+    
+    y_true = tf.cast(y_true, dtype=tf.int32)
+    y_pred = tf.cast(y_pred, dtype=tf.int32)
     
     assert y_true.shape == y_pred.shape
     
