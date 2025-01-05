@@ -85,7 +85,7 @@ class Transformer(keras.Model):
 
     return np.mean(losses), np.mean(accuracies)"""
   
-  #@tf.function
+  @tf.function
   def evaluate(self, context, target):
       # Create a map function to process each context in the batch
       def compute_loss_and_accuracy(input_seq, target_seq):
@@ -133,6 +133,10 @@ class Transformer(keras.Model):
   
   @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
   def my_predict(self, context):
+
+    #print(context)
+    #exit(0)
+
     # Initialize output array
     output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
     output_array = output_array.write(0, self.START_TOKEN)

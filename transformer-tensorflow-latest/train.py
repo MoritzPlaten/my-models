@@ -6,20 +6,18 @@ import matplotlib.pyplot as plt
 from Layers.Transformer import Transformer
 from Dataset.MyDataset import generate_random_data
 
-# Parameters (adjust as needed)
 num_layers = 4
 d_model = 128
 dff = 512
 num_heads = 8
 dropout_rate = 0.1
-batch_size = 64  # Set to 1 for inference (predicting one example at a time)
+batch_size = 64
 max_input_length = 50
 max_target_length = 50
 input_vocab_size = 30000
 target_vocab_size = 30000
-total_sequences = 64*4
+total_sequences = 64*2
 
-# Instantiate the transformer model
 transformer = Transformer(
     num_layers=num_layers,
     d_model=d_model,
@@ -45,10 +43,8 @@ y_validiation= target_seq[target_seq_len:]
 
 history = transformer.my_train(X_train, y_train, X_validiation, y_validiation, epochs=2, batch_size=batch_size)
 
-# After training, you can save the model if needed
 tf.saved_model.save(transformer, "transformer.keras", signatures={"my_predict": transformer.my_predict})
-
-# Print model summary
+ 
 transformer.summary()
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
