@@ -11,13 +11,13 @@ from Metrics.TransformerMetrics import masked_accuracy, masked_loss, simple_loss
 class Transformer(keras.Model):
 
   def __init__(self, *, num_layers, d_model, num_heads, dff,
-               input_vocab_size, target_vocab_size, max_target_length, dropout_rate=0.1, learning_rate=0.001, training=False):
-    super().__init__()
+               input_vocab_size, target_vocab_size, max_target_length, dropout_rate=0.1, learning_rate=0.001, start_token=6, end_token=120):
+    super(Transformer, self).__init__()
 
     self.supports_masking = True
 
-    self.START_TOKEN = 6
-    self.END_TOKEN = 120
+    self.START_TOKEN = tf.constant(start_token, dtype=tf.int64)
+    self.END_TOKEN = tf.constant(end_token, dtype=tf.int64)
 
     self.max_target_length = max_target_length
 
@@ -35,11 +35,12 @@ class Transformer(keras.Model):
 
     self.final_layer = keras.layers.Dense(target_vocab_size)
 
+
   def call(self, inputs, training=False):
 
     context, x  = inputs
-    context = self.encoder(context)  # (batch_size, context_len, d_model)
-    x = self.decoder(x, context)  # (batch_size, target_len, d_model)
+    context = self.encoder(context, training=training)  # (batch_size, context_len, d_model)
+    x = self.decoder(x, context, training=training)  # (batch_size, target_len, d_model)
     logits = self.final_layer(x)  # (batch_size, target_len, target_vocab_size)
 
     try:
@@ -133,9 +134,6 @@ class Transformer(keras.Model):
   
   @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
   def my_predict(self, context):
-
-    #print(context)
-    #exit(0)
 
     # Initialize output array
     output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)

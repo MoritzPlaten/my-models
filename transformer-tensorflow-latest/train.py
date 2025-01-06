@@ -1,10 +1,12 @@
 import tensorflow as tf
-import numpy as np
+import keras
 import matplotlib.pyplot as plt
 
 #from transformers import BertTokenizer
 from Layers.Transformer import Transformer
 from Dataset.MyDataset import generate_random_data
+
+#tf.config.run_functions_eagerly(True)
 
 num_layers = 4
 d_model = 128
@@ -33,6 +35,8 @@ input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random
     total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size, start_token_input=6, start_token_target=6
 )
 
+transformer.build(input_shape=tf.shape(input_seq))
+
 input_seq_len =  int(len(input_seq) - batch_size)
 target_seq_len = int(len(target_seq) - batch_size)
 
@@ -43,8 +47,9 @@ y_validiation= target_seq[target_seq_len:]
 
 history = transformer.my_train(X_train, y_train, X_validiation, y_validiation, epochs=2, batch_size=batch_size)
 
-tf.saved_model.save(transformer, "transformer.keras", signatures={"my_predict": transformer.my_predict})
- 
+#tf.saved_model.save(transformer, "transformer.keras", signatures={"my_predict": transformer.my_predict})
+transformer.save_weights('transformer.weights.h5')
+
 transformer.summary()
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
