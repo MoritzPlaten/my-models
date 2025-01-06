@@ -5,7 +5,7 @@ from Layers.EncoderLayer import EncoderLayer
 
 class Encoder(keras.layers.Layer):
   def __init__(self, *, num_layers, d_model, num_heads,
-               dff, vocab_size, dropout_rate=0.1):
+               dff, vocab_size, dropout_rate=0.1, seed=42):
     super().__init__()
 
     self.supports_masking = True
@@ -20,9 +20,10 @@ class Encoder(keras.layers.Layer):
         EncoderLayer(d_model=d_model,
                      num_heads=num_heads,
                      dff=dff,
-                     dropout_rate=dropout_rate)
+                     dropout_rate=dropout_rate,
+                     seed=seed)
         for _ in range(num_layers)]
-    self.dropout = keras.layers.Dropout(dropout_rate)
+    self.dropout = keras.layers.Dropout(dropout_rate, seed=seed)
 
   def call(self, x, training=False):
     # `x` is token-IDs shape: (batch, seq_len)

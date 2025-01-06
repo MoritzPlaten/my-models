@@ -10,7 +10,7 @@ class DecoderLayer(keras.layers.Layer):
                d_model,
                num_heads,
                dff,
-               dropout_rate=0.1):
+               dropout_rate=0.1, seed=42):
     super(DecoderLayer, self).__init__()
 
     self.supports_masking = True
@@ -18,14 +18,16 @@ class DecoderLayer(keras.layers.Layer):
     self.causal_self_attention = CausalSelfAttention(
         num_heads=num_heads,
         key_dim=d_model,
-        dropout=dropout_rate)
+        dropout=dropout_rate,
+        seed=seed)
 
     self.cross_attention = CrossAttention(
         num_heads=num_heads,
         key_dim=d_model,
-        dropout=dropout_rate)
+        dropout=dropout_rate,
+        seed=seed)
 
-    self.ffn = FeedForward(d_model, dff)
+    self.ffn = FeedForward(d_model, dff, seed=seed)
 
   def call(self, x, context, training=False):
     

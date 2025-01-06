@@ -1,7 +1,7 @@
 import keras
 
 class FeedForward(keras.layers.Layer):
-  def __init__(self, d_model, dff, dropout_rate=0.1):
+  def __init__(self, d_model, dff, dropout_rate=0.1, seed=42):
     super().__init__()
 
     self.supports_masking = True
@@ -9,7 +9,7 @@ class FeedForward(keras.layers.Layer):
     self.seq = keras.Sequential([
       keras.layers.Dense(dff, activation='relu'),
       keras.layers.Dense(d_model),
-      keras.layers.Dropout(dropout_rate)
+      keras.layers.Dropout(dropout_rate, seed=seed)
     ])
     self.seq.supports_masking = True
 

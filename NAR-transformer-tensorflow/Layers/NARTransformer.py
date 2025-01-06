@@ -11,7 +11,7 @@ from Metrics.TransformerMetrics import masked_accuracy, masked_loss, simple_loss
 class NARTransformer(keras.Model):
 
   def __init__(self, *, num_layers, d_model, num_heads, dff,
-               input_vocab_size, target_vocab_size, max_target_length, dropout_rate=0.1, learning_rate=0.001, start_token=6):
+               input_vocab_size, target_vocab_size, max_target_length, dropout_rate=0.1, learning_rate=0.001, start_token=6, seed=42):
     super().__init__()
 
     self.supports_masking = True
@@ -26,17 +26,23 @@ class NARTransformer(keras.Model):
     self.start_token = start_token
     self.max_target_length = max_target_length
 
+    self.masked_loss_fn = masked_loss
+    self.masked_accuracy_fn = masked_accuracy
+    self.simple_loss_fn = simple_loss
+    self.simple_accuracy_fn = simple_accuracy
+
     self.optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
     self.encoder = Encoder(num_layers=num_layers, d_model=d_model,
                            num_heads=num_heads, dff=dff,
                            vocab_size=input_vocab_size,
-                           dropout_rate=dropout_rate)
+                           dropout_rate=dropout_rate,
+                           seed=seed)
 
     self.decoder = Decoder(num_layers=num_layers, d_model=d_model,
                            num_heads=num_heads, dff=dff,
                            vocab_size=target_vocab_size,
-                           dropout_rate=dropout_rate)
+                           dropout_rate=dropout_rate, seed=seed)
 
     self.final_layer = keras.layers.Dense(target_vocab_size)
 
@@ -55,17 +61,17 @@ class NARTransformer(keras.Model):
     return logits
   
   
-  @tf.function
+  @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32), tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
   def train_step(self, context, target):
 
     with tf.GradientTape() as tape:
       logits = self.call((context, target), training=True)
-      loss = masked_loss(target, logits)
-
+      loss = self.masked_loss_fn(target, logits)
+      
     gradients = tape.gradient(loss, self.trainable_variables)
     self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
 
-    accuracy = masked_accuracy(target, logits)
+    accuracy = self.masked_accuracy_fn(target, logits)
 
     return loss, accuracy
   
@@ -82,7 +88,7 @@ class NARTransformer(keras.Model):
 
     return predicted_tokens
 
-  @tf.function
+  @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32), tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
   def evaluate(self, context, target):
       # Create a map function to process each context in the batch
       def compute_loss_and_accuracy(input_seq, target_seq):
@@ -90,8 +96,8 @@ class NARTransformer(keras.Model):
           final_output = self.predict(input_seq)
           final_output = tf.squeeze(final_output)
 
-          loss = simple_loss(target_seq, final_output)
-          accuracy = simple_accuracy(target_seq, final_output)
+          loss = self.simple_loss_fn(target_seq, final_output)
+          accuracy = self.simple_accuracy_fn(target_seq, final_output)
           return loss, accuracy
 
       # Map the function over the entire batch (context)

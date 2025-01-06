@@ -4,7 +4,7 @@ from Layers.GlobalSelfAttention import GlobalSelfAttention
 from Layers.FeedForward import FeedForward
 
 class EncoderLayer(keras.layers.Layer):
-  def __init__(self,*, d_model, num_heads, dff, dropout_rate=0.1):
+  def __init__(self,*, d_model, num_heads, dff, dropout_rate=0.1, seed=42):
     super().__init__()
 
     self.supports_masking = True
@@ -12,9 +12,10 @@ class EncoderLayer(keras.layers.Layer):
     self.self_attention = GlobalSelfAttention(
         num_heads=num_heads,
         key_dim=d_model,
-        dropout=dropout_rate)
+        dropout=dropout_rate,
+        seed=seed)
 
-    self.ffn = FeedForward(d_model, dff)
+    self.ffn = FeedForward(d_model, dff, seed=seed)
 
   def call(self, x, training=False):
     x = self.self_attention(x, training=training)
