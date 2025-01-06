@@ -2,29 +2,28 @@ import keras
 import tensorflow as tf
 
 def masked_loss(label, pred):
-  mask = label != 0
+  mask = tf.not_equal(label, 0)
   loss_object = keras.losses.SparseCategoricalCrossentropy(
     from_logits=True, reduction='none')
   loss = loss_object(label, pred)
 
   mask = tf.cast(mask, dtype=loss.dtype)
   loss *= mask
-
-  loss = tf.reduce_sum(loss)/tf.reduce_sum(mask)
-  return loss
+  
+  return tf.reduce_sum(loss)/tf.reduce_sum(mask)
 
 
 def masked_accuracy(label, pred):
   pred = tf.argmax(pred, axis=2)
   label = tf.cast(label, pred.dtype)
-  match = label == pred
+  match = tf.equal(pred, label)
 
-  mask = label != 0
-
-  match = match & mask
+  mask = tf.not_equal(label, 0)
+  match = tf.logical_and(match, mask)
 
   match = tf.cast(match, dtype=tf.float32)
   mask = tf.cast(mask, dtype=tf.float32)
+
   return tf.reduce_sum(match)/tf.reduce_sum(mask)
 
 def simple_loss(y_true, y_pred):
