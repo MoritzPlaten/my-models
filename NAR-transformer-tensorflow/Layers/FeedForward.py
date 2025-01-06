@@ -1,14 +1,14 @@
 import keras
 
 class FeedForward(keras.layers.Layer):
-  def __init__(self, d_model, dff, dropout_rate=0.1, seed=42):
+  def __init__(self, d_model, dff, kernel_initializer, seed, dropout_rate=0.1):
     super().__init__()
 
     self.supports_masking = True
 
     self.seq = keras.Sequential([
-      keras.layers.Dense(dff, activation='relu'),
-      keras.layers.Dense(d_model),
+      keras.layers.Dense(dff, activation='relu', kernel_initializer=kernel_initializer),
+      keras.layers.Dense(d_model, kernel_initializer=kernel_initializer),
       keras.layers.Dropout(dropout_rate, seed=seed)
     ])
     self.seq.supports_masking = True

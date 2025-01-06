@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 from Layers.NARTransformer import NARTransformer
 from Dataset.MyDataset import generate_random_data
 
-tf.random.set_seed(42)
-
 # Parameters (adjust as needed)
 num_layers = 4
 d_model = 128
@@ -19,7 +17,7 @@ max_input_length = 50
 max_target_length = 50
 input_vocab_size = 30000
 target_vocab_size = 30000
-total_sequences = 1000
+total_sequences = 100000
 
 #tf.config.experimental_run_functions_eagerly(True)
 
@@ -49,7 +47,7 @@ y_validiation = target_seq[target_seq_len:]
 
 history = transformer.train(X_train, y_train, X_validiation, y_validiation, epochs=2, batch_size=batch_size)
 
-tf.saved_model.save(transformer, "transformer.keras", signatures={"predict": transformer.predict, 'train_step': transformer.train_step, 'evaluate': transformer.evaluate})
+tf.saved_model.save(transformer, "transformer.keras", signatures={"predict": transformer.predict, 'evaluate': transformer.evaluate, 'train_step': transformer.train_step}) #, 'train_step': transformer.train_step
 
 # Print model summary
 transformer.summary()

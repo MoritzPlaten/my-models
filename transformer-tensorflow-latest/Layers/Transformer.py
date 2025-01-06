@@ -28,52 +28,30 @@ class Transformer(keras.Model):
     self.start_token = start_token
     self.end_token = end_token
 
+    self.masked_loss_fn = masked_loss
+    self.masked_accuracy_fn = masked_accuracy
+    self.simple_loss_fn = simple_loss
+    self.simple_accuracy_fn = simple_accuracy
+
+    self.rand_initializer = "glorot_uniform"
+    self.seed = 42
+
     self.optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
     self.encoder = Encoder(num_layers=num_layers, d_model=d_model,
                            num_heads=num_heads, dff=dff,
                            vocab_size=input_vocab_size,
-                           dropout_rate=dropout_rate)
+                           dropout_rate=dropout_rate,
+                           seed=self.seed, kernel_initializer=self.rand_initializer)
 
     self.decoder = Decoder(num_layers=num_layers, d_model=d_model,
                            num_heads=num_heads, dff=dff,
                            vocab_size=target_vocab_size,
-                           dropout_rate=dropout_rate)
+                           dropout_rate=dropout_rate, seed=self.seed, kernel_initializer=self.rand_initializer)
 
-    self.final_layer = keras.layers.Dense(target_vocab_size)
+    self.final_layer = keras.layers.Dense(target_vocab_size, kernel_initializer=self.rand_initializer)
 
-  def get_config(self):
-        # Gibt alle Parameter zurück, die beim Initialisieren verwendet wurden
-        base_config = super(Transformer, self).get_config()
-        
-        # Konfiguration für die benutzerdefinierten Parameter
-        custom_config = {
-            'num_layers': self.num_layers,
-            'd_model': self.d_model,
-            'num_heads': self.num_heads,
-            'dff': self.dff,
-            'input_vocab_size': self.input_vocab_size,
-            'target_vocab_size': self.target_vocab_size,
-            'max_target_length': self.max_target_length,
-            'dropout_rate': self.dropout_rate,
-            'learning_rate': self.learning_rate,
-            'start_token': self.start_token,
-            'end_token': self.end_token
-        }
-        
-        # Kombiniere beide Konfigurationen
-        return {**base_config, **custom_config}
 
-  @classmethod
-  def from_config(cls, config):
-      # Erstelle eine Instanz des Modells anhand der Konfiguration
-      config.pop('trainable', None)
-      config.pop('dtype', None)
-      config.pop('name', None)
-
-      return cls(**config)
-
-  @tf.function
   def call(self, inputs, training=False):
 
     context, x  = inputs
@@ -89,23 +67,23 @@ class Transformer(keras.Model):
     return logits
   
   
-  @tf.function
+  @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32), tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
   def train_step(self, context, target):
 
     with tf.GradientTape() as tape:
-      logits = self.call((context, target), training=True)
-      loss = masked_loss(target, logits)
-
+      logits = self.call((context, target), training=False) #TODO: Here is the issue with the seed_generator. Something is wrong if I want to save it. Normally it should be True
+      loss = self.masked_loss_fn(target, logits)
+      
     gradients = tape.gradient(loss, self.trainable_variables)
     self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
 
-    accuracy = masked_accuracy(target, logits)
+    accuracy = self.masked_accuracy_fn(target, logits)
 
     return loss, accuracy
   
   
   @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
-  def predict(self, x, batch_size=None, verbose=0):
+  def predict(self, x):
 
     # Initialize output array
     output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
@@ -144,7 +122,7 @@ class Transformer(keras.Model):
     final_output = output_array.stack()
     return final_output
 
-  @tf.function
+  @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32), tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
   def evaluate(self, context, target):
       # Create a map function to process each context in the batch
       def compute_loss_and_accuracy(input_seq, target_seq):
@@ -152,8 +130,8 @@ class Transformer(keras.Model):
           final_output = self.predict(input_seq)
           final_output = tf.squeeze(final_output)
           
-          loss = simple_loss(target_seq, final_output)
-          accuracy = simple_accuracy(target_seq, final_output)
+          loss = self.simple_loss_fn(target_seq, final_output)
+          accuracy = self.simple_accuracy_fn(target_seq, final_output)
           return loss, accuracy
 
       # Map the function over the entire batch (context)

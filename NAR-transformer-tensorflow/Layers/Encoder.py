@@ -5,7 +5,7 @@ from Layers.EncoderLayer import EncoderLayer
 
 class Encoder(keras.layers.Layer):
   def __init__(self, *, num_layers, d_model, num_heads,
-               dff, vocab_size, dropout_rate=0.1, seed=42):
+               dff, vocab_size, kernel_initializer, seed, dropout_rate=0.1):
     super().__init__()
 
     self.supports_masking = True
@@ -21,7 +21,7 @@ class Encoder(keras.layers.Layer):
                      num_heads=num_heads,
                      dff=dff,
                      dropout_rate=dropout_rate,
-                     seed=seed)
+                     seed=seed, kernel_initializer=kernel_initializer)
         for _ in range(num_layers)]
     self.dropout = keras.layers.Dropout(dropout_rate, seed=seed)
 

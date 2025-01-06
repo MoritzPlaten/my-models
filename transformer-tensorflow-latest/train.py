@@ -35,8 +35,6 @@ input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random
     total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size, start_token_input=6, start_token_target=6
 )
 
-transformer.build(input_shape=tf.shape(input_seq))
-
 input_seq_len =  int(len(input_seq) - batch_size)
 target_seq_len = int(len(target_seq) - batch_size)
 
@@ -47,8 +45,7 @@ y_validiation= target_seq[target_seq_len:]
 
 history = transformer.train(X_train, y_train, X_validiation, y_validiation, epochs=2, batch_size=batch_size)
 
-#tf.saved_model.save(transformer, "transformer.keras", signatures={"my_predict": transformer.my_predict})
-transformer.save_weights('transformer.weights.h5')
+tf.saved_model.save(transformer, "transformer.keras", signatures={"predict": transformer.predict, 'evaluate': transformer.evaluate, 'train_step': transformer.train_step})
 
 transformer.summary()
 

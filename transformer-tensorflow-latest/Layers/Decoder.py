@@ -4,7 +4,7 @@ from Layers.PositionalEmbedding import PositionalEmbedding
 from Layers.DecoderLayer import DecoderLayer
 
 class Decoder(keras.layers.Layer):
-  def __init__(self, *, num_layers, d_model, num_heads, dff, vocab_size,
+  def __init__(self, *, num_layers, d_model, num_heads, dff, vocab_size, kernel_initializer, seed,
                dropout_rate=0.1):
     super(Decoder, self).__init__()
 
@@ -15,10 +15,10 @@ class Decoder(keras.layers.Layer):
 
     self.pos_embedding = PositionalEmbedding(vocab_size=vocab_size,
                                              d_model=d_model)
-    self.dropout = keras.layers.Dropout(dropout_rate)
+    self.dropout = keras.layers.Dropout(dropout_rate, seed=seed)
     self.dec_layers = [
         DecoderLayer(d_model=d_model, num_heads=num_heads,
-                     dff=dff, dropout_rate=dropout_rate)
+                     dff=dff, dropout_rate=dropout_rate, seed=seed, kernel_initializer=kernel_initializer)
         for _ in range(num_layers)]
 
     self.last_attn_scores = None

@@ -11,7 +11,7 @@ from Metrics.TransformerMetrics import masked_accuracy, masked_loss, simple_loss
 class NARTransformer(keras.Model):
 
   def __init__(self, *, num_layers, d_model, num_heads, dff,
-               input_vocab_size, target_vocab_size, max_target_length, dropout_rate=0.1, learning_rate=0.001, start_token=6, seed=42):
+               input_vocab_size, target_vocab_size, max_target_length, dropout_rate=0.1, learning_rate=0.001, start_token=6):
     super().__init__()
 
     self.supports_masking = True
@@ -31,20 +31,23 @@ class NARTransformer(keras.Model):
     self.simple_loss_fn = simple_loss
     self.simple_accuracy_fn = simple_accuracy
 
+    self.rand_initializer = "glorot_uniform"
+    self.seed = 42
+
     self.optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
     self.encoder = Encoder(num_layers=num_layers, d_model=d_model,
                            num_heads=num_heads, dff=dff,
                            vocab_size=input_vocab_size,
                            dropout_rate=dropout_rate,
-                           seed=seed)
+                           seed=self.seed, kernel_initializer=self.rand_initializer)
 
     self.decoder = Decoder(num_layers=num_layers, d_model=d_model,
                            num_heads=num_heads, dff=dff,
                            vocab_size=target_vocab_size,
-                           dropout_rate=dropout_rate, seed=seed)
+                           dropout_rate=dropout_rate, seed=self.seed, kernel_initializer=self.rand_initializer)
 
-    self.final_layer = keras.layers.Dense(target_vocab_size)
+    self.final_layer = keras.layers.Dense(target_vocab_size, kernel_initializer=self.rand_initializer)
 
   def call(self, inputs, training=False):
 
@@ -65,7 +68,7 @@ class NARTransformer(keras.Model):
   def train_step(self, context, target):
 
     with tf.GradientTape() as tape:
-      logits = self.call((context, target), training=True)
+      logits = self.call((context, target), training=False) #TODO: Here is the issue with the seed_generator. Something is wrong if I want to save it. Normally it should be True
       loss = self.masked_loss_fn(target, logits)
       
     gradients = tape.gradient(loss, self.trainable_variables)
