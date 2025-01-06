@@ -26,6 +26,6 @@ input_seq, target_seq, input_padding_mask, target_padding_mask = generate_random
     total_sequences, max_input_length, max_target_length, input_vocab_size, target_vocab_size
 )
 
-prediction = transformer.signatures["my_predict"](context=input_seq)
+prediction = transformer.signatures["predict"](context=input_seq)
 
 print("Final predicted sequence:", prediction)

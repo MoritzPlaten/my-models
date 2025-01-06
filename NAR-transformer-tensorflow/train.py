@@ -43,10 +43,10 @@ y_train = target_seq[:target_seq_len]
 X_validiation = input_seq[input_seq_len:]
 y_validiation = target_seq[target_seq_len:]
 
-history = transformer.my_train(X_train, y_train, X_validiation, y_validiation, epochs=2, batch_size=batch_size)
+history = transformer.train(X_train, y_train, X_validiation, y_validiation, epochs=2, batch_size=batch_size)
 
 # After training, you can save the model if needed
-tf.saved_model.save(transformer, "transformer.keras", signatures={"my_predict": transformer.my_predict})
+tf.saved_model.save(transformer, "transformer.keras", signatures={"predict": transformer.predict})
 
 # Print model summary
 transformer.summary()
