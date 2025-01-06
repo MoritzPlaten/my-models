@@ -16,10 +16,17 @@ class Transformer(keras.Model):
 
     self.supports_masking = True
 
-    self.START_TOKEN = tf.constant(start_token, dtype=tf.int64)
-    self.END_TOKEN = tf.constant(end_token, dtype=tf.int64)
-
+    self.num_layers = num_layers
+    self.d_model = d_model
+    self.num_heads = num_heads
+    self.dff = dff
+    self.input_vocab_size = input_vocab_size
+    self.target_vocab_size = target_vocab_size
     self.max_target_length = max_target_length
+    self.dropout_rate = dropout_rate
+    self.learning_rate = learning_rate
+    self.start_token = start_token
+    self.end_token = end_token
 
     self.optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
@@ -35,7 +42,38 @@ class Transformer(keras.Model):
 
     self.final_layer = keras.layers.Dense(target_vocab_size)
 
+  def get_config(self):
+        # Gibt alle Parameter zurück, die beim Initialisieren verwendet wurden
+        base_config = super(Transformer, self).get_config()
+        
+        # Konfiguration für die benutzerdefinierten Parameter
+        custom_config = {
+            'num_layers': self.num_layers,
+            'd_model': self.d_model,
+            'num_heads': self.num_heads,
+            'dff': self.dff,
+            'input_vocab_size': self.input_vocab_size,
+            'target_vocab_size': self.target_vocab_size,
+            'max_target_length': self.max_target_length,
+            'dropout_rate': self.dropout_rate,
+            'learning_rate': self.learning_rate,
+            'start_token': self.start_token,
+            'end_token': self.end_token
+        }
+        
+        # Kombiniere beide Konfigurationen
+        return {**base_config, **custom_config}
 
+  @classmethod
+  def from_config(cls, config):
+      # Erstelle eine Instanz des Modells anhand der Konfiguration
+      config.pop('trainable', None)
+      config.pop('dtype', None)
+      config.pop('name', None)
+
+      return cls(**config)
+
+  @tf.function
   def call(self, inputs, training=False):
 
     context, x  = inputs
@@ -65,94 +103,28 @@ class Transformer(keras.Model):
 
     return loss, accuracy
   
-
-  """def evaluate(self, context, target):
-
-    accuracies = []
-    losses = []
-
-    for i in range(len(context)):
-
-      input_seq = context[i]
-      input_seq = tf.expand_dims(input_seq, axis=0)
-
-      final_output = self.my_predict(input_seq)
-
-      loss = simple_loss(target[i], final_output)
-      accuracy = simple_accuracy(target[i], final_output)
-
-      losses.append(loss)
-      accuracies.append(accuracy)
-
-    return np.mean(losses), np.mean(accuracies)"""
-  
-  @tf.function
-  def evaluate(self, context, target):
-      # Create a map function to process each context in the batch
-      def compute_loss_and_accuracy(input_seq, target_seq):
-          input_seq = tf.expand_dims(input_seq, axis=0)  # Add batch dimension
-          final_output = self.my_predict(input_seq)
-          final_output = tf.squeeze(final_output)
-          
-          loss = simple_loss(target_seq, final_output)
-          accuracy = simple_accuracy(target_seq, final_output)
-          return loss, accuracy
-
-      # Map the function over the entire batch (context)
-      results = tf.map_fn(lambda x: compute_loss_and_accuracy(x[0], x[1]), (context, target), dtype=(tf.float32, tf.float32))
-
-      # Extract losses and accuracies from the results
-      losses, accuracies = results
-
-      # Return the mean loss and accuracy
-      return tf.reduce_mean(losses), tf.reduce_mean(accuracies)
-  
-
-  """def my_predict(self, context):
-
-    output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
-    output_array = output_array.write(0, self.START_TOKEN)
-
-    for i in range(self.max_target_length - 1): 
-
-      output = tf.transpose(output_array.stack())
-      output = tf.expand_dims(output, axis=0)
-
-      predictions = self.call([context, output], training=False)
-      predictions = predictions[-1, -1, :]
-
-      predicted_id = tf.argmax(predictions, axis=-1)
-      predicted_id = tf.squeeze(predicted_id)
-      
-      output_array = output_array.write(i + 1, predicted_id)
-      
-      if predicted_id == self.END_TOKEN:
-        break
-
-    final_output = output_array.stack()
-    return final_output"""
   
   @tf.function(input_signature=[tf.TensorSpec(shape=[None, None], dtype=tf.int32)])
-  def my_predict(self, context):
+  def predict(self, x, batch_size=None, verbose=0):
 
     # Initialize output array
     output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
-    output_array = output_array.write(0, self.START_TOKEN)
+    output_array = output_array.write(0, self.start_token)
     
     # Define loop variables
     i = tf.constant(0, dtype=tf.int32)
-    predicted_id = tf.constant(self.START_TOKEN, dtype=tf.int64)
+    predicted_id = tf.constant(self.start_token, dtype=tf.int64)
 
     # Define the condition for the while loop: i < max_target_length
     def condition(i, predicted_id, output_array):
-        return tf.logical_and(i < self.max_target_length - 1, tf.not_equal(predicted_id, self.END_TOKEN))
+        return tf.logical_and(i < self.max_target_length - 1, tf.not_equal(predicted_id, self.end_token))
 
     # Define the body of the loop
     def body(i, predicted_id, output_array):
         output = tf.transpose(output_array.stack())
         output = tf.expand_dims(output, axis=0)
 
-        predictions = self.call([context, output], training=False)
+        predictions = self.call([x, output], training=False)
         predictions = predictions[-1, -1, :]
 
         predicted_id = tf.argmax(predictions, axis=-1)
@@ -172,8 +144,29 @@ class Transformer(keras.Model):
     final_output = output_array.stack()
     return final_output
 
+  @tf.function
+  def evaluate(self, context, target):
+      # Create a map function to process each context in the batch
+      def compute_loss_and_accuracy(input_seq, target_seq):
+          input_seq = tf.expand_dims(input_seq, axis=0)  # Add batch dimension
+          final_output = self.predict(input_seq)
+          final_output = tf.squeeze(final_output)
+          
+          loss = simple_loss(target_seq, final_output)
+          accuracy = simple_accuracy(target_seq, final_output)
+          return loss, accuracy
 
-  def my_train(self, x, y, val_x, val_y, batch_size=32, epochs=10):
+      # Map the function over the entire batch (context)
+      results = tf.map_fn(lambda x: compute_loss_and_accuracy(x[0], x[1]), (context, target), dtype=(tf.float32, tf.float32))
+
+      # Extract losses and accuracies from the results
+      losses, accuracies = results
+
+      # Return the mean loss and accuracy
+      return tf.reduce_mean(losses), tf.reduce_mean(accuracies)
+
+
+  def train(self, x, y, val_x, val_y, batch_size=32, epochs=10):
 
     history = {"loss": [], "accuracy": [], "val_loss": [], "val_accuracy": []}
 
