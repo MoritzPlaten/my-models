@@ -67,3 +67,7 @@ Thumbs.db
 *.h5
 
 *.keras/
+
+*.index
+*.pb
+*.data-*
