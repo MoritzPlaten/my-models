@@ -43,8 +43,8 @@ class NARTransformer(keras.Model):
   def call(self, inputs, training=False):
 
     context, x  = inputs
-    context = self.encoder(context)  # (batch_size, context_len, d_model)
-    x = self.decoder(x, context)  # (batch_size, target_len, d_model)
+    context = self.encoder(context, training=training)  # (batch_size, context_len, d_model)
+    x = self.decoder(x, context, training=training)  # (batch_size, target_len, d_model)
     logits = self.final_layer(x)  # (batch_size, target_len, target_vocab_size)
 
     try:
