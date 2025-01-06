@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 
 from Layers.NARTransformer import NARTransformer
 from Metrics.TransformerMetrics import masked_accuracy, masked_loss  # Import your custom metrics
