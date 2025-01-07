@@ -48,6 +48,7 @@ class NARTransformer(keras.Model):
                            dropout_rate=dropout_rate, seed=self.seed, kernel_initializer=self.rand_initializer)
 
     self.final_layer = keras.layers.Dense(target_vocab_size, kernel_initializer=self.rand_initializer)
+    
 
   def call(self, inputs, training=False):
 

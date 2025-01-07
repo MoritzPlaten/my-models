@@ -1,16 +1,8 @@
 import tensorflow as tf
 
-from Layers.NARTransformer import NARTransformer
-from Metrics.TransformerMetrics import masked_accuracy, masked_loss  # Import your custom metrics
 from Dataset.MyDataset import generate_random_data
 
-# Parameters (adjust as needed)
-num_layers = 4
-d_model = 128
-dff = 512
-num_heads = 8
-dropout_rate = 0.1
-batch_size = 64  # Set to 1 for inference (predicting one example at a time)
+batch_size = 64
 max_input_length = 50
 max_target_length = 50
 input_vocab_size = 30000
