@@ -2,6 +2,7 @@ import keras
 
 from Layers.PositionalEmbedding import PositionalEmbedding
 from Layers.EncoderLayer import EncoderLayer
+from Layers.CustomDropout import CustomDropout
 
 class Encoder(keras.layers.Layer):
   def __init__(self, *, num_layers, d_model, num_heads,
@@ -23,7 +24,7 @@ class Encoder(keras.layers.Layer):
                      dropout_rate=dropout_rate,
                      seed=seed, kernel_initializer=kernel_initializer)
         for _ in range(num_layers)]
-    self.dropout = keras.layers.Dropout(dropout_rate, seed=seed)
+    self.dropout = CustomDropout(dropout_rate, seed=seed)
 
   def call(self, x, training=False):
     # `x` is token-IDs shape: (batch, seq_len)

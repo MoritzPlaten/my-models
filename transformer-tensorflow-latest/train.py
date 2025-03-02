@@ -18,7 +18,7 @@ max_input_length = 50
 max_target_length = 50
 input_vocab_size = 30000
 target_vocab_size = 30000
-total_sequences = 100000
+total_sequences = 1000
 
 transformer = Transformer(
     num_layers=num_layers,

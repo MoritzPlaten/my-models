@@ -71,7 +71,7 @@ class Transformer(keras.Model):
   def train_step(self, context, target):
 
     with tf.GradientTape() as tape:
-      logits = self.call((context, target), training=False) #TODO: Here is the issue with the seed_generator. Something is wrong if I want to save it. Normally it should be True
+      logits = self.call((context, target), training=True) #TODO: Here is the issue with the seed_generator. Something is wrong if I want to save it. Normally it should be True
       loss = self.masked_loss_fn(target, logits)
       
     gradients = tape.gradient(loss, self.trainable_variables)
@@ -159,7 +159,7 @@ class Transformer(keras.Model):
         num_train_batches = 0
 
         for context, target in tqdm(train_dataset, desc="Training"):
-            loss, accuracy = self.train_step(context, target)
+            loss, accuracy = self.train_step(context=context, target=target)
 
             train_loss_sum += loss
             train_accuracy_sum += accuracy

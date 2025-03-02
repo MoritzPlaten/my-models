@@ -2,7 +2,7 @@ from Layers.BaseAttention import BaseAttention
 
 class GlobalSelfAttention(BaseAttention):
 
-  def call(self, x, training=False):
+  def call(self, x, training=False): #TODO: add mask=None
     attn_output = self.mha(
         query=x,
         value=x,
